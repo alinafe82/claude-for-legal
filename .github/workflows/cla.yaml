@@ -9,6 +9,10 @@ permissions:
   contents: write
   pull-requests: write
   statuses: write
+
+concurrency:
+  group: cla-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: false
 jobs:
   CLAAssistant:
     runs-on: ubuntu-latest
