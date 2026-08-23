@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -19,6 +20,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         with:
           python-version: "3.13"
@@ -28,6 +31,28 @@ jobs:
         run: python -m compileall -q scripts
       - name: Validate JSON documents
         run: find . -path ./.git -prune -o -name '*.json' -print0 | xargs -0 -n1 python -m json.tool >/dev/null
+      - name: Validate YAML documents
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import yaml
+
+          for pattern in ("*.yaml", "*.yml"):
+              for path in Path(".").rglob(pattern):
+                  if ".git" not in path.parts:
+                      yaml.safe_load(path.read_text())
+          PY
+      - name: Exercise managed-output schema validator
+        run: |
+          printf '%s\n' '{"result": "approved"}' > /tmp/valid.json
+          printf '%s\n' '{"result": 7}' > /tmp/invalid.json
+          printf '%s\n' 'type: object' 'required: [result]' 'properties:' \
+            '  result:' '    type: string' > /tmp/schema.yaml
+          python scripts/validate.py /tmp/valid.json /tmp/schema.yaml
+          if python scripts/validate.py /tmp/invalid.json /tmp/schema.yaml; then
+            echo "Invalid fixture unexpectedly passed schema validation" >&2
+            exit 1
+          fi
       - name: Enforce orchestrator tool scope
         run: python scripts/lint-tool-scope.py
       - name: Dry-run managed-agent cookbooks
