@@ -40,4 +40,4 @@ jobs:
           # resolves to the `claude` login rather than the email, so the
           # login forms are allowlisted too — the human PR opener still has
           # to sign either way.
-          allowlist: "iainmcgin,claude,claude[bot],dependabot[bot],github-actions[bot],renovate[bot],noreply@anthropic.com"
+          allowlist: "alinafe82,iainmcgin,claude,claude[bot],dependabot[bot],github-actions[bot],renovate[bot],noreply@anthropic.com"
